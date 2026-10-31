@@ -84,7 +84,7 @@ While official launchers often suffer from GPU shader crashes, infinite updater 
 
 | Package | Download Link | Description |
 | :--- | :--- | :--- |
-| **Windows Installer** | **[SKLauncher-Setup.exe](https://github.com/Vagabond404/SKLauncher-Ultra/releases/latest)** | **Recommended**: Complete setup wizard, creates Desktop & Start Menu shortcuts. |
+| **Windows Installer** | **[SKLauncher-Ultra-Setup.exe](https://github.com/Vagabond404/SKLauncher-Ultra/releases/latest)** | **Recommended**: Complete setup wizard, creates Desktop & Start Menu shortcuts. |
 | **Portable Version** | **[SKLauncher-Portable.zip](https://github.com/Vagabond404/SKLauncher-Ultra/releases/latest)** | Zero installation required. Unzip anywhere and launch `sklauncher.exe`. |
 
 ---
