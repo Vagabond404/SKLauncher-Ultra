@@ -2,8 +2,8 @@
   "packageManager": "pnpm@12.6.0+sha512.3ef68f951cb111ac204b4a5a16f0b2ddf0da56a96e0413e81d855d9f0b55ef926714709028e1cd00c405c2c5fb7b9e8ec4dc46777c805d0373c2f2ff00fd20ec",
   "name": "sklauncher",
   "description": "Minecraft Launcher",
-  "author": "skmedix",
-  "homepage": "https://skmedix.pl",
+  "author": "Vagabond404",
+  "homepage": "https://github.com/Vagabond404/SKLauncher-Ultra",
   "version": "4.0.55",
   "main": "./out/main/index.js",
   "desktopName": "pl.skmedix.sklauncher.desktop",
@@ -45,5 +45,9 @@
   },
   "devDependencies": {
     "electron": "^43.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Vagabond404/SKLauncher-Ultra.git"
   }
 }

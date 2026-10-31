@@ -1,8 +1,7 @@
-owner: sklauncher
-repo: binaries
+owner: Vagabond404
+repo: SKLauncher-Ultra
 provider: github
 channel: stable
 vPrefixedTagName: true
-releaseType: draft
 publishAutoUpdate: true
-updaterCacheDirName: sklauncher-updater
+updaterCacheDirName: sklauncher-ultra-updater
