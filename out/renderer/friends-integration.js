@@ -1,5 +1,5 @@
-// SKLauncher Ultra - Friends Network Hub Overlay
-// Safe DOM integration completely isolated from Svelte 5
+// SKLauncher Ultra - Friends Network Hub Overlay & Custom Skin Importer
+// 100% isolated from Svelte 5 virtual DOM
 
 (function initFriendsNetwork() {
   if (typeof window === 'undefined') return;
@@ -12,7 +12,7 @@
 
   function onReady() {
     try {
-      createSidebarTrigger();
+      createTitlebarTrigger();
       createFriendsModal();
       setupKeyboard();
     } catch (err) {
@@ -21,13 +21,13 @@
   }
 
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setTimeout(onReady, 500);
+    setTimeout(onReady, 300);
   } else {
     window.addEventListener('DOMContentLoaded', onReady);
   }
 
-  // 1. Sleek Floating Trigger Button in Left Sidebar
-  function createSidebarTrigger() {
+  // 1. Sleek Titlebar Trigger Button (Top-Right, next to Support on Patreon)
+  function createTitlebarTrigger() {
     if (document.getElementById('sk-friends-trigger')) return;
 
     const trigger = document.createElement('button');
@@ -36,48 +36,55 @@
     trigger.title = 'Friends Network (Press F or Click)';
     trigger.setAttribute('aria-label', 'Open Friends Network');
 
-    // Styled to sit comfortably in the sidebar above the settings cog (left: 14px, bottom: 68px)
+    // Styled to sit in top header bar (top: 7px, right: 295px, height: 30px)
     trigger.style.cssText = `
       position: fixed;
-      left: 14px;
-      bottom: 68px;
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+      top: 7px;
+      right: 295px;
+      height: 30px;
+      padding: 0 13px;
+      border-radius: 8px;
       background: #27272a;
       border: 1px solid #3f3f46;
       color: #f4f4f5;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
+      gap: 7px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
       z-index: 9999;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      -webkit-app-region: no-drag;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       user-select: none;
-      padding: 0;
     `;
 
     trigger.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
         <circle cx="9" cy="7" r="4"></circle>
         <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
       </svg>
-      <span style="position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #10b981; border: 2px solid #18181b; box-shadow: 0 0 8px #10b981;"></span>
+      <span>Friends</span>
+      <span style="position: relative; display: flex; width: 7px; height: 7px;">
+        <span style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #10b981; opacity: 0.75; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>
+        <span style="position: relative; width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
+      </span>
     `;
 
     trigger.addEventListener('mouseenter', () => {
       trigger.style.background = '#3f3f46';
       trigger.style.borderColor = '#10b981';
-      trigger.style.transform = 'scale(1.06)';
+      trigger.style.color = '#10b981';
     });
 
     trigger.addEventListener('mouseleave', () => {
       trigger.style.background = '#27272a';
       trigger.style.borderColor = '#3f3f46';
-      trigger.style.transform = 'scale(1)';
+      trigger.style.color = '#f4f4f5';
     });
 
     trigger.addEventListener('click', (e) => {
@@ -102,11 +109,10 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(10, 10, 12, 0.82);
+      background: rgba(10, 10, 12, 0.85);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      animation: skFadeIn 0.2s ease-out;
     `;
 
     overlayEl.innerHTML = `
@@ -125,7 +131,7 @@
       ">
         <!-- Header -->
         <div style="
-          padding: 20px 24px;
+          padding: 18px 24px;
           border-bottom: 1px solid #27272a;
           display: flex;
           align-items: center;
@@ -188,8 +194,9 @@
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+            flex-wrap: wrap;
           ">
-            <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
               <img id="sk-my-avatar" src="https://mc-heads.net/avatar/MHF_Steve/56" alt="Avatar" style="
                 width: 56px;
                 height: 56px;
@@ -197,33 +204,53 @@
                 border: 2px solid #3f3f46;
                 background: #18181b;
                 object-fit: cover;
+                flex-shrink: 0;
               "/>
-              <div>
+              <div style="min-width: 0;">
                 <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #10b981; letter-spacing: 0.5px;">Your Profile</div>
-                <div id="sk-my-username" style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px;">Loading...</div>
+                <div id="sk-my-username" style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Loading...</div>
                 <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
                   <span style="font-size: 12px; color: #a1a1aa;">Friend Code:</span>
                   <span id="sk-my-code" style="font-family: monospace; font-size: 13px; font-weight: 700; color: #38bdf8; background: #18181b; padding: 2px 6px; border-radius: 6px; border: 1px solid #27272a;">SK-....-....</span>
                 </div>
               </div>
             </div>
-            <button type="button" id="sk-copy-my-code-btn" style="
-              background: #27272a;
-              border: 1px solid #3f3f46;
-              color: #f4f4f5;
-              padding: 9px 16px;
-              border-radius: 10px;
-              font-size: 13px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: all 0.2s;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            ">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              <span>Copy Code</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" id="sk-import-skin-profile-btn" style="
+                background: #27272a;
+                border: 1px solid #3f3f46;
+                color: #f4f4f5;
+                padding: 9px 14px;
+                border-radius: 10px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              ">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Import Skin</span>
+              </button>
+              <button type="button" id="sk-copy-my-code-btn" style="
+                background: #10b981;
+                border: none;
+                color: #fff;
+                padding: 9px 16px;
+                border-radius: 10px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              ">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copy Code</span>
+              </button>
+            </div>
           </div>
 
           <!-- Add Friend Form -->
@@ -293,16 +320,36 @@
         if (!myIdentity || !myIdentity.friendCode) return;
         navigator.clipboard.writeText(myIdentity.friendCode);
         copyBtn.innerHTML = `<span>Copied!</span>`;
-        copyBtn.style.borderColor = '#10b981';
-        copyBtn.style.color = '#10b981';
         setTimeout(() => {
           copyBtn.innerHTML = `
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             <span>Copy Code</span>
           `;
-          copyBtn.style.borderColor = '#3f3f46';
-          copyBtn.style.color = '#f4f4f5';
         }, 1800);
+      });
+    }
+
+    // Import skin button in profile card
+    const importSkinBtn = document.getElementById('sk-import-skin-profile-btn');
+    if (importSkinBtn) {
+      importSkinBtn.addEventListener('click', async () => {
+        try {
+          if (window.api && window.api.importCustomSkin) {
+            const res = await window.api.importCustomSkin();
+            if (res && res.success) {
+              alert('Skin imported successfully for ' + res.username + '! Refreshing character...');
+              const avatarEl = document.getElementById('sk-my-avatar');
+              if (avatarEl && res.dataUrl) {
+                avatarEl.src = res.dataUrl;
+              }
+              window.location.reload();
+            } else if (res && res.error) {
+              alert('Failed to import skin: ' + res.error);
+            }
+          }
+        } catch (err) {
+          alert('Import error: ' + err.message);
+        }
       });
     }
 
@@ -381,17 +428,15 @@
 
     try {
       // 1. Identity
-      if (!myIdentity) {
-        myIdentity = await window.api.p2pFriends.getMyIdentity();
-        if (myIdentity) {
-          const userEl = document.getElementById('sk-my-username');
-          const codeEl = document.getElementById('sk-my-code');
-          const avatarEl = document.getElementById('sk-my-avatar');
-          if (userEl) userEl.textContent = myIdentity.username || 'Minecraft Player';
-          if (codeEl) codeEl.textContent = myIdentity.friendCode || 'SK-XXXX-XXXX';
-          if (avatarEl) {
-            avatarEl.src = `https://mc-heads.net/avatar/${encodeURIComponent(myIdentity.username || 'MHF_Steve')}/56`;
-          }
+      myIdentity = await window.api.p2pFriends.getMyIdentity();
+      if (myIdentity) {
+        const userEl = document.getElementById('sk-my-username');
+        const codeEl = document.getElementById('sk-my-code');
+        const avatarEl = document.getElementById('sk-my-avatar');
+        if (userEl) userEl.textContent = myIdentity.username || 'Minecraft Player';
+        if (codeEl) codeEl.textContent = myIdentity.friendCode || 'SK-XXXX-XXXX';
+        if (avatarEl) {
+          avatarEl.src = `https://mc-heads.net/avatar/${encodeURIComponent(myIdentity.username || 'MHF_Steve')}/56`;
         }
       }
 

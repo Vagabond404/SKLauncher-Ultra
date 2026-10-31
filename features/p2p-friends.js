@@ -60,7 +60,28 @@ class P2PFriendsNetwork {
     }
   }
 
+  
+  getActiveAccount() {
+    try {
+      const accountsPath = path.join(this.appData, '.sklauncher', 'accounts.json');
+      if (fs.existsSync(accountsPath)) {
+        const accs = JSON.parse(fs.readFileSync(accountsPath, 'utf8'));
+        const active = (accs.accounts || []).find(a => a.id === accs.activeAccountId) || (accs.accounts && accs.accounts[0]);
+        if (active) return active;
+      }
+    } catch (e) {
+      console.warn('[P2PFriends] Could not read accounts.json:', e.message);
+    }
+    return null;
+  }
+
   getMyIdentity(activeUsername) {
+    const activeAcc = this.getActiveAccount();
+    if (activeAcc && activeAcc.username) {
+      this.data.identity.username = activeAcc.username;
+      this.data.identity.uuid = activeAcc.uuid;
+      this.saveStorage();
+    }
     if (activeUsername && activeUsername !== this.data.identity.username) {
       this.data.identity.username = activeUsername;
       this.saveStorage();
@@ -225,6 +246,44 @@ class P2PFriendsNetwork {
   }
 
   registerIpc(ipcMain) {
+    ipcMain.handle('custom-skin:import', async () => {
+      const { dialog } = require('electron');
+      const res = await dialog.showOpenDialog({
+        title: 'Select Minecraft Skin (.png)',
+        filters: [{ name: 'Minecraft Skin (*.png)', extensions: ['png'] }],
+        properties: ['openFile']
+      });
+      if (res.canceled || !res.filePaths || !res.filePaths.length) {
+        return { canceled: true };
+      }
+
+      const filePath = res.filePaths[0];
+      const skinBytes = fs.readFileSync(filePath);
+
+      const active = this.getActiveAccount();
+      if (!active) {
+        return { success: false, error: 'No active Minecraft account found in SKLauncher.' };
+      }
+
+      const rawUuid = (active.uuid || 'steve').replace(/-/g, '');
+      const prefix = rawUuid.slice(0, 2);
+      const skinDir = path.join(this.appData, '.sklauncher', 'assets', 'skins', prefix);
+      if (!fs.existsSync(skinDir)) {
+        fs.mkdirSync(skinDir, { recursive: true });
+      }
+
+      const targetPath = path.join(skinDir, rawUuid);
+      fs.writeFileSync(targetPath, skinBytes);
+
+      const dataUrl = 'data:image/png;base64,' + skinBytes.toString('base64');
+      return {
+        success: true,
+        username: active.username,
+        targetPath,
+        dataUrl
+      };
+    });
+
     ipcMain.handle('p2p-friends:get-my-identity', async (event, currentUsername) => {
       return this.getMyIdentity(currentUsername);
     });
