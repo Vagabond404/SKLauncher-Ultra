@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Production build artifacts (compiled ASARs)
+dist/
+build/
+*.tmp
+*.bak
+
+# Logs and runtime caches
+logs/
+*.log
+*.log.gz
+.sklauncher/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,8 @@
+owner: sklauncher
+repo: binaries
+provider: github
+channel: stable
+vPrefixedTagName: true
+releaseType: draft
+publishAutoUpdate: true
+updaterCacheDirName: sklauncher-updater

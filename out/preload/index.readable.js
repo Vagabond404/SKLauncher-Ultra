@@ -1,0 +1,218 @@
+let o=require("@electron-toolkit/preload"),n=require("electron");
+var c= {
+  windowControls: {
+    minimize:()=>n.ipcRenderer.invoke("window:minimize"),maximize:()=>n.ipcRenderer.invoke("window:maximize"),close:()=>n.ipcRenderer.invoke("window:close"),openConsole:e=>n.ipcRenderer.invoke("console:open",e)
+  },app: {
+    platform:process.platform,getVersion:()=>n.ipcRenderer.invoke("app:get-version"),getGpuStatus:()=>n.ipcRenderer.invoke("app:get-gpu-status"),getOsInfo:()=>n.ipcRenderer.invoke("app:get-os-info"),getMemoryInfo:()=>n.ipcRenderer.invoke("app:get-memory-info"),shareLauncherLog:()=>n.ipcRenderer.invoke("app:share-launcher-log"),restart:()=> {
+      n.ipcRenderer.invoke("app:restart")
+    }
+  },net: {
+    isOnline:()=>typeof navigator<"u"&&typeof navigator.onLine=="boolean"?navigator.onLine:!0,onStatusChange:e=> {
+      const r=()=>e(!0),t=()=>e(!1);
+      return window.addEventListener("online",r),window.addEventListener("offline",t),()=> {
+        window.removeEventListener("online",r),window.removeEventListener("offline",t)
+      }
+    }
+  },system: {
+    openExternal:e=>n.ipcRenderer.invoke("system:open-external",e)
+  },analytics: {
+    track:(e,r)=>n.ipcRenderer.invoke("analytics:track",e,r)
+  },theme: {
+    setSource:e=>n.ipcRenderer.invoke("theme:set-source",e)
+  },security: {
+    scanSystemThreats:()=>n.ipcRenderer.invoke("security:scan-system"),runManualScan:()=>n.ipcRenderer.invoke("security:run-manual-scan"),scanHosts:()=>n.ipcRenderer.invoke("security:scan-hosts"),repairHosts:()=>n.ipcRenderer.invoke("security:repair-hosts"),threatAcknowledge:()=>n.ipcRenderer.invoke("security:threat-acknowledge"),threatQuit:()=>n.ipcRenderer.invoke("security:threat-quit")
+  },updater: {
+    getInitialStateSync:()=>n.ipcRenderer.sendSync("updater:get-initial-state-sync"),getState:()=>n.ipcRenderer.invoke("updater:get-state"),checkNow:()=>n.ipcRenderer.invoke("updater:check-now"),downloadAndInstall:()=>n.ipcRenderer.invoke("updater:download-and-install"),installAndRestart:()=>n.ipcRenderer.invoke("updater:install-and-restart"),cancelAutoRestart:()=>n.ipcRenderer.invoke("updater:cancel-auto-restart"),clearCacheAndRetry:()=>n.ipcRenderer.invoke("updater:clear-cache-and-retry"),retryInstall:()=>n.ipcRenderer.invoke("updater:retry-install"),setChannel:e=>n.ipcRenderer.invoke("updater:set-channel",e),openManualDownload:()=>n.ipcRenderer.invoke("updater:open-manual-download"),moveToApplications:()=>n.ipcRenderer.invoke("updater:move-to-applications"),onStatusChange:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("updater:status",r),()=> {
+        n.ipcRenderer.removeListener("updater:status",r)
+      }
+    },onLockStateChange:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("updater:lock-state",r),()=> {
+        n.ipcRenderer.removeListener("updater:lock-state",r)
+      }
+    },onProgress:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("updater:download-progress",r),()=> {
+        n.ipcRenderer.removeListener("updater:download-progress",r)
+      }
+    },onDownloaded:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("updater:downloaded",r),()=> {
+        n.ipcRenderer.removeListener("updater:downloaded",r)
+      }
+    },onAutoDownloadStarted:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("updater:auto-download-started",r),()=> {
+        n.ipcRenderer.removeListener("updater:auto-download-started",r)
+      }
+    },onError:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("updater:error",r),()=> {
+        n.ipcRenderer.removeListener("updater:error",r)
+      }
+    }
+  },settings: {
+    getAll:()=>n.ipcRenderer.invoke("settings:get-all"),get:e=>n.ipcRenderer.invoke("settings:get",e),set:e=>n.ipcRenderer.invoke("settings:set",e),getAutoLaunch:()=>n.ipcRenderer.invoke("settings:get-auto-launch")
+  },notifications: {
+    show:e=>n.ipcRenderer.send("notifications:show",e),isSupported:()=>n.ipcRenderer.invoke("notifications:supported")
+  },auth: {
+    initialize:()=>n.ipcRenderer.invoke("auth:initialize"),loginMicrosoft:()=>n.ipcRenderer.invoke("auth:login-microsoft"),cancelMicrosoftLogin:()=>n.ipcRenderer.invoke("auth:cancel-microsoft-login"),loginOffline:e=>n.ipcRenderer.invoke("auth:login-offline",e),logout:e=>n.ipcRenderer.invoke("auth:logout",e),switchAccount:e=>n.ipcRenderer.invoke("auth:switch-account",e),getAccounts:()=>n.ipcRenderer.invoke("auth:get-accounts"),getActiveAccount:()=>n.ipcRenderer.invoke("auth:get-active-account"),refreshToken:e=>n.ipcRenderer.invoke("auth:refresh-token",e),isTokenExpired:()=>n.ipcRenderer.invoke("auth:is-token-expired"),onStateChange:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("auth:state-changed",r),()=>n.ipcRenderer.removeListener("auth:state-changed",r)
+    }
+  },skin: {
+    get:(e,r)=>n.ipcRenderer.invoke("skin:get",e,r),forceRefresh:(e,r)=>n.ipcRenderer.invoke("skin:force-refresh",e,r),getCape:(e,r)=>n.ipcRenderer.invoke("skin:get-cape",e,r),refreshActive:e=>n.ipcRenderer.invoke("skin:refresh-active",e),getProfile:()=>n.ipcRenderer.invoke("skin:get-profile"),upload:(e,r)=>n.ipcRenderer.invoke("skin:upload",e,r),reset:()=>n.ipcRenderer.invoke("skin:reset"),fetchTexture:e=>n.ipcRenderer.invoke("skin:fetch-texture",e),equipCape:e=>n.ipcRenderer.invoke("cape:equip",e),unequipCape:()=>n.ipcRenderer.invoke("cape:unequip"),apply:e=>n.ipcRenderer.invoke("skin:apply",e),currentTextureId:()=>n.ipcRenderer.invoke("skin:current-texture-id"),presets: {
+      list:()=>n.ipcRenderer.invoke("skin-preset:list"),create:e=>n.ipcRenderer.invoke("skin-preset:create",e),update:(e,r)=>n.ipcRenderer.invoke("skin-preset:update",e,r),remove:e=>n.ipcRenderer.invoke("skin-preset:remove",e),reorder:e=>n.ipcRenderer.invoke("skin-preset:reorder",e),getTexture:e=>n.ipcRenderer.invoke("skin-preset:get-texture",e),onUpdated:e=> {
+        const r=(t,i)=>e(i);
+        return n.ipcRenderer.on("skin-preset:updated",r),()=>n.ipcRenderer.removeListener("skin-preset:updated",r)
+      }
+    },onUpdated:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("skin:updated",r),()=>n.ipcRenderer.removeListener("skin:updated",r)
+    },onAppearanceUpdated:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("skin:appearance-updated",r),()=>n.ipcRenderer.removeListener("skin:appearance-updated",r)
+    }
+  },friends: {
+    list:e=>n.ipcRenderer.invoke("friends:list",e),cached:()=>n.ipcRenderer.invoke("friends:cached"),mutate:e=>n.ipcRenderer.invoke("friends:mutate",e),presence:()=>n.ipcRenderer.invoke("friends:presence:get"),blocklist:e=>n.ipcRenderer.invoke("friends:blocklist",e),setPanelOpen:e=>n.ipcRenderer.invoke("friends:setPanelOpen",e),getAttributes:e=>n.ipcRenderer.invoke("friends:attributes:get",e),setAttributes:e=>n.ipcRenderer.invoke("friends:attributes:set",e),onUpdated:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("friends:updated",r),()=>n.ipcRenderer.removeListener("friends:updated",r)
+    },onPresenceUpdated:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("presence:updated",r),()=>n.ipcRenderer.removeListener("presence:updated",r)
+    },onAttributesUpdated:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("friends:attributes:updated",r),()=>n.ipcRenderer.removeListener("friends:attributes:updated",r)
+    }
+  },versions: {
+    getVanilla:()=>n.ipcRenderer.invoke("versions:get-vanilla"),getModded:e=>n.ipcRenderer.invoke("versions:get-modded",e),getLocal:()=>n.ipcRenderer.invoke("versions:get-local"),clearCache:()=>n.ipcRenderer.invoke("versions:clear-cache")
+  },java: {
+    isInstalled:e=>n.ipcRenderer.invoke("java:is-installed",e),isAvailable:e=>n.ipcRenderer.invoke("java:is-available",e),getInstalled:()=>n.ipcRenderer.invoke("java:get-installed"),getAvailable:()=>n.ipcRenderer.invoke("java:get-available"),getAllComponents:()=>n.ipcRenderer.invoke("java:get-all-components"),getExecutablePath:e=>n.ipcRenderer.invoke("java:get-executable-path",e),getInfo:e=>n.ipcRenderer.invoke("java:get-info",e),getInstalledVersion:e=>n.ipcRenderer.invoke("java:get-installed-version",e),getProvider:e=>n.ipcRenderer.invoke("java:get-provider",e),getDiskUsage:()=>n.ipcRenderer.invoke("java:get-disk-usage"),getSourcePreferences:()=>n.ipcRenderer.invoke("java:get-source-preferences"),setSourcePreference:(e,r)=>n.ipcRenderer.invoke("java:set-source-preference",e,r),install:e=>n.ipcRenderer.invoke("java:install",e),delete:e=>n.ipcRenderer.invoke("java:delete",e),verify:e=>n.ipcRenderer.invoke("java:verify",e),onInstallComplete:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("java:install-complete",r),()=>n.ipcRenderer.removeListener("java:install-complete",r)
+    },onVerifyProgress:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("java:verify-progress",r),()=>n.ipcRenderer.removeListener("java:verify-progress",r)
+    }
+  },downloads: {
+    onProgress:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("download:progress",r),()=>n.ipcRenderer.removeListener("download:progress",r)
+    },onComplete:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("download:complete",r),()=>n.ipcRenderer.removeListener("download:complete",r)
+    },onError:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("download:error",r),()=>n.ipcRenderer.removeListener("download:error",r)
+    }
+  },instances: {
+    initialize:()=>n.ipcRenderer.invoke("instances:initialize"),list:()=>n.ipcRenderer.invoke("instances:list"),get:e=>n.ipcRenderer.invoke("instances:get",e),create:e=>n.ipcRenderer.invoke("instances:create",e),duplicate:(e,r)=>n.ipcRenderer.invoke("instances:duplicate",e,r),exportSkpackPreview:e=>n.ipcRenderer.invoke("instances:export-skpack-preview",e),exportSkpack:(e,r)=>n.ipcRenderer.invoke("instances:export-skpack",e,r),allocateId:e=>n.ipcRenderer.invoke("instances:allocate-id",e),delete:(e,r=!0)=>n.ipcRenderer.invoke("instances:delete",e,r),purge:e=>n.ipcRenderer.invoke("instances:purge",e),update:(e,r)=>n.ipcRenderer.invoke("instances:update",e,r),changeVersion:(e,r)=>n.ipcRenderer.invoke("instances:change-version",e,r),getVersion:e=>n.ipcRenderer.invoke("instances:get-version",e),resolveVersion:e=>n.ipcRenderer.invoke("instances:resolve-version",e),getDefaultVersionId:e=>n.ipcRenderer.invoke("instances:get-default-version-id",e),openDirectory:(e,r="")=>n.ipcRenderer.invoke("instances:open-directory",e,r),listMods:e=>n.ipcRenderer.invoke("instances:list-mods",e),getKeybinds:e=>n.ipcRenderer.invoke("instance:keybinds:get",e),saveKeybinds:(e,r)=>n.ipcRenderer.invoke("instance:keybinds:save",e,r),listFiles:(e,r="")=>n.ipcRenderer.invoke("instances:list-files",e,r),resolvePath:(e,r)=>n.ipcRenderer.invoke("instances:resolve-path",e,r),revealFile:(e,r)=>n.ipcRenderer.invoke("instances:reveal-file",e,r),deleteFile:(e,r)=>n.ipcRenderer.invoke("instances:delete-file",e,r),renameFile:(e,r,t)=>n.ipcRenderer.invoke("instances:rename-file",e,r,t),importFiles:(e,r,t)=>n.ipcRenderer.invoke("instances:import-files",e,r,t),listScreenshots:e=>n.ipcRenderer.invoke("instances:list-screenshots",e),copyScreenshot:(e,r)=>n.ipcRenderer.invoke("instances:copy-screenshot",e,r),saveScreenshotAs:(e,r)=>n.ipcRenderer.invoke("instances:save-screenshot-as",e,r),onScreenshotAdded:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("screenshot:added",r),()=>n.ipcRenderer.removeListener("screenshot:added",r)
+    },toggleMod:(e,r)=>n.ipcRenderer.invoke("instances:toggle-mod",e,r),deleteMod:(e,r)=>n.ipcRenderer.invoke("instances:delete-mod",e,r),createShortcut:(e,r)=>n.ipcRenderer.invoke("instances:create-shortcut",e,r),fetchIconBytes:e=>n.ipcRenderer.invoke("instances:fetch-icon-bytes",e),launcherImport: {
+      getDefaultPath:e=>n.ipcRenderer.invoke("instances:import-default-path",e),list:(e,r)=>n.ipcRenderer.invoke("instances:import-list",e,r),detectSKlauncher3:()=>n.ipcRenderer.invoke("instances:import-detect-sklauncher3"),analyzeShared:(e,r)=>n.ipcRenderer.invoke("instances:import-analyze-shared",e,r),run:(e,r,t)=>n.ipcRenderer.invoke("instances:import-run",e,r,t),onProgress:e=> {
+        const r=(t,i)=>e(i);
+        return n.ipcRenderer.on("instances:import-progress",r),()=>n.ipcRenderer.removeListener("instances:import-progress",r)
+      }
+    },onStateChange:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("instances:state-changed",r),()=>n.ipcRenderer.removeListener("instances:state-changed",r)
+    },onInstallationError:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("instance:installation-error",r),()=>n.ipcRenderer.removeListener("instance:installation-error",r)
+    }
+  },playtime: {
+    getSummary:()=>n.ipcRenderer.invoke("playtime:get-summary"),onSummaryChanged:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("playtime:summary-changed",r),()=>n.ipcRenderer.removeListener("playtime:summary-changed",r)
+    }
+  },jumplist: {
+    setRecents:e=>n.ipcRenderer.invoke("jumplist:set-recents",e)
+  },servers: {
+    fetch:()=>n.ipcRenderer.invoke("servers:fetch"),fetchOne:e=>n.ipcRenderer.invoke("servers:fetchOne",e),trackIpCopy:e=>n.ipcRenderer.invoke("servers:trackIpCopy",e),installModpack:e=>n.ipcRenderer.invoke("servers:install-modpack",e)
+  },news: {
+    fetch:e=>n.ipcRenderer.invoke("news:fetch",e)
+  },remoteConfig: {
+    fetch:()=>n.ipcRenderer.invoke("remote:config-fetch")
+  },game: {
+    launch:e=>n.ipcRenderer.invoke("game:launch",e),launchQuickplay:(e,r)=>n.ipcRenderer.invoke("game:launch-quickplay",e,r),stop:e=>n.ipcRenderer.invoke("game:stop",e),stopAll:()=>n.ipcRenderer.invoke("game:stop-all"),getState:e=>n.ipcRenderer.invoke("game:get-state",e),getRunning:()=>n.ipcRenderer.invoke("game:get-running"),getLog:e=>n.ipcRenderer.invoke("game:get-log",e),getSession:e=>n.ipcRenderer.invoke("game:get-session",e),isRunning:e=>n.ipcRenderer.invoke("game:is-running",e),isInstalled:e=>n.ipcRenderer.invoke("game:is-installed",e),install:e=>n.ipcRenderer.invoke("game:install",e),repair:e=>n.ipcRenderer.invoke("game:repair",e),onStateChange:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("game:state-changed",r),()=>n.ipcRenderer.removeListener("game:state-changed",r)
+    },onOutput:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("game:output",r),()=>n.ipcRenderer.removeListener("game:output",r)
+    },onModsRemoved:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("game:mods-removed",r),()=>n.ipcRenderer.removeListener("game:mods-removed",r)
+    },getDefaultJvmArgs:e=>n.ipcRenderer.invoke("game:get-default-jvm-args",e),getRecommendedJavaComponent:e=>n.ipcRenderer.invoke("game:get-recommended-java-component",e),onCrashDetected:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("crash:report-detected",r),()=>n.ipcRenderer.removeListener("crash:report-detected",r)
+    },openCrashReport:(e,r)=>n.ipcRenderer.invoke("game:open-crash-report",e,r),shareCrashReport:(e,r)=>n.ipcRenderer.invoke("game:share-crash-report",e,r),shareLog:(e,r)=>n.ipcRenderer.invoke("game:share-log",e,r),applyCrashFix:(e,r)=>n.ipcRenderer.invoke("game:apply-crash-fix",e,r)
+  },dialog: {
+    openFile:e=>n.ipcRenderer.invoke("dialog:open-file",e|| {
+      
+    }),openDirectory:e=>n.ipcRenderer.invoke("dialog:open-directory",e|| {
+      
+    })
+  },dataDir: {
+    get:()=>n.ipcRenderer.invoke("data-dir:get"),change:e=>n.ipcRenderer.invoke("data-dir:change",e),recover:e=>n.ipcRenderer.invoke("data-dir:recover",e)
+  },migration: {
+    getInitialStateSync:()=>n.ipcRenderer.sendSync("migration:get-initial-state-sync"),onStatus:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("migration:status",r),()=> {
+        n.ipcRenderer.removeListener("migration:status",r)
+      }
+    }
+  },utils: {
+    getPathForFile:e=>n.webUtils.getPathForFile(e)
+  },storage: {
+    getSummary:()=>n.ipcRenderer.invoke("storage:get-summary"),computeSizes:()=>n.ipcRenderer.invoke("storage:compute-sizes"),clearShared:e=>n.ipcRenderer.invoke("storage:clear-shared",e),clearCache:()=>n.ipcRenderer.invoke("storage:clear-cache"),onItemSize:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("storage:item-size",r),()=> {
+        n.ipcRenderer.removeListener("storage:item-size",r)
+      }
+    }
+  },quickplay: {
+    getInstances:()=>n.ipcRenderer.invoke("quickplay:get-instances"),removeInstance:(e,r,t)=>n.ipcRenderer.invoke("quickplay:remove-instance",e,r,t),setPinned:(e,r,t,i)=>n.ipcRenderer.invoke("quickplay:set-pinned",e,r,t,i),updateInstance:(e,r,t,i)=>n.ipcRenderer.invoke("quickplay:update-instance",e,r,t,i),onUpdate:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("quickplay:update",r),()=>n.ipcRenderer.removeListener("quickplay:update",r)
+    },getWorldIcon:(e,r)=>n.ipcRenderer.invoke("quickplay:get-world-icon",e,r),clearAllData:()=>n.ipcRenderer.invoke("quickplay:clear-all-data")
+  },content: {
+    modrinth: {
+      search:e=>n.ipcRenderer.invoke("content:modrinth-search",e),getProject:e=>n.ipcRenderer.invoke("content:modrinth-get-project",e),getVersions:(e,r)=>n.ipcRenderer.invoke("content:modrinth-get-versions",e,r),getVersion:e=>n.ipcRenderer.invoke("content:modrinth-get-version",e),getChangelog:e=>n.ipcRenderer.invoke("content:modrinth-get-changelog",e),getVersionFromHash:(e,r="sha512")=>n.ipcRenderer.invoke("content:modrinth-get-version-from-hash",e,r),batchCheckUpdates:(e,r,t="sha512")=>n.ipcRenderer.invoke("content:modrinth-batch-check-updates",e,r,t),getCategories:e=>n.ipcRenderer.invoke("content:modrinth-get-categories",e)
+    },curseforge: {
+      search:e=>n.ipcRenderer.invoke("content:curseforge-search",e),getProject:e=>n.ipcRenderer.invoke("content:curseforge-get-project",e),getVersions:(e,r)=>n.ipcRenderer.invoke("content:curseforge-get-versions",e,r),getDownloadUrl:(e,r)=>n.ipcRenderer.invoke("content:curseforge-get-download-url",e,r),getChangelog:(e,r)=>n.ipcRenderer.invoke("content:curseforge-get-changelog",e,r),matchFingerprints:e=>n.ipcRenderer.invoke("content:curseforge-match-fingerprints",e),setApiKey:e=>n.ipcRenderer.invoke("content:curseforge-set-api-key",e),getApiKey:()=>n.ipcRenderer.invoke("content:curseforge-get-api-key"),getCategories:e=>n.ipcRenderer.invoke("content:curseforge-get-categories",e)
+    },mods: {
+      install:(e,r,t,i)=>n.ipcRenderer.invoke("content:install-mod",e,r,t,i),resolveDependencies:(e,r,t)=>n.ipcRenderer.invoke("content:resolve-dependencies",e,r,t),findDuplicates:e=>n.ipcRenderer.invoke("content:find-duplicate-mods",e),remove:(e,r,t)=>n.ipcRenderer.invoke("content:remove-mod",e,r,t),toggle:(e,r,t)=>n.ipcRenderer.invoke("content:toggle-mod",e,r,t)
+    },bulk: {
+      setEnabled:(e,r,t)=>n.ipcRenderer.invoke("content:bulk-set-enabled",e,r,t),remove:(e,r)=>n.ipcRenderer.invoke("content:bulk-remove",e,r),copyToInstance:(e,r,t)=>n.ipcRenderer.invoke("content:copy-to-instance",e,r,t)
+    },manifest: {
+      get:e=>n.ipcRenderer.invoke("content:get-manifest",e),getModpackLink:e=>n.ipcRenderer.invoke("content:get-modpack-link",e),unlinkModpack:e=>n.ipcRenderer.invoke("content:unlink-modpack",e),setModpackLocked:(e,r)=>n.ipcRenderer.invoke("content:set-modpack-locked",e,r),checkModpackUpdate:e=>n.ipcRenderer.invoke("content:check-modpack-update",e),installContent:(e,r,t,i)=>n.ipcRenderer.invoke("content:install-content",e,r,t,i),removeContent:(e,r,t)=>n.ipcRenderer.invoke("content:remove-content",e,r,t),toggleContent:(e,r,t)=>n.ipcRenderer.invoke("content:toggle-content",e,r,t),verifyAndRepair:e=>n.ipcRenderer.invoke("content:verify-and-repair",e),syncWithDisk:e=>n.ipcRenderer.invoke("content:sync-with-disk",e),refresh:e=>n.ipcRenderer.invoke("content:refresh-instance",e),reinstallMissing:(e,r,t)=>n.ipcRenderer.invoke("content:reinstall-missing",e,r,t),importUnmanaged:(e,r,t)=>n.ipcRenderer.invoke("content:import-unmanaged",e,r,t),removeFromManifest:(e,r,t)=>n.ipcRenderer.invoke("content:remove-from-manifest",e,r,t)
+    },updates: {
+      check:(e,r)=>n.ipcRenderer.invoke("content:check-updates",e,r),checkModpack:(e,r)=>n.ipcRenderer.invoke("content:check-modpack-update",e,r),getCached:e=>n.ipcRenderer.invoke("content:get-cached-updates",e),applyModpack:e=>n.ipcRenderer.invoke("content:apply-modpack-update",e),previewModpack:e=>n.ipcRenderer.invoke("content:preview-modpack-update",e),apply:(e,r)=>n.ipcRenderer.invoke("content:apply-updates",e,r),scanAndIdentify:e=>n.ipcRenderer.invoke("content:scan-identify-content",e)
+    },worlds: {
+      listForInstance:e=>n.ipcRenderer.invoke("content:worlds-list",e),delete:(e,r)=>n.ipcRenderer.invoke("content:worlds-delete",e,r),copy:(e,r,t)=>n.ipcRenderer.invoke("content:worlds-copy",e,r,t),move:(e,r,t)=>n.ipcRenderer.invoke("content:worlds-move",e,r,t)
+    },servers: {
+      listForInstance:e=>n.ipcRenderer.invoke("content:servers-list",e),status:e=>n.ipcRenderer.invoke("content:servers-status",e)
+    }
+  },installation: {
+    start:e=>n.ipcRenderer.invoke("installation:start-modpack",e),previewModpackFile:e=>n.ipcRenderer.invoke("installation:preview-modpack-file",e),importFromFile:e=>n.ipcRenderer.invoke("installation:import-modpack",e),importMmcPack:e=>n.ipcRenderer.invoke("installation:import-mmc-pack",e),previewSkpackUpdate:(e,r)=>n.ipcRenderer.invoke("installation:preview-skpack-update",e,r),applySkpackUpdate:(e,r)=>n.ipcRenderer.invoke("installation:apply-skpack-update",e,r),previewOptifineFile:e=>n.ipcRenderer.invoke("installation:preview-optifine-file",e),importOptifine:e=>n.ipcRenderer.invoke("installation:import-optifine",e),cancel:e=>n.ipcRenderer.invoke("installation:cancel",e),getStatus:e=>n.ipcRenderer.invoke("installation:get-status",e),getAll:()=>n.ipcRenderer.invoke("installation:get-all"),onProgress:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("installation:progress",r),()=>n.ipcRenderer.removeListener("installation:progress",r)
+    },onComplete:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("installation:complete",r),()=>n.ipcRenderer.removeListener("installation:complete",r)
+    },onError:e=> {
+      const r=(t,i)=>e(i);
+      return n.ipcRenderer.on("installation:error",r),()=>n.ipcRenderer.removeListener("installation:error",r)
+    }
+  }
+};
+if(process.contextIsolated)try {
+  n.contextBridge.exposeInMainWorld("electron",o.electronAPI),n.contextBridge.exposeInMainWorld("api",c)
+}catch(e) {
+  console.error(e)
+}else window.electron=o.electronAPI,window.api=c;
+
