@@ -17,8 +17,11 @@ function createAsar(srcDir, outputFile) {
     const tree = {};
     const items = fs.readdirSync(dir);
     for (const item of items) {
-      if (item === 'dist' || item === 'scripts' || item.endsWith('.readable.js') || item.endsWith('.map')) {
-        continue; // Exclude build artifacts and developer tools from the production ASAR
+      if (relPath === '' && (item === 'dist' || item === 'scripts' || item === '.git' || item === '.gitignore' || item === 'push-to-github.bat')) {
+        continue; // Only exclude top-level root build and git directories
+      }
+      if (item.endsWith('.readable.js') || item.endsWith('.map')) {
+        continue; // Exclude sourcemaps and developer readable dumps
       }
       const fullPath = path.join(dir, item);
       const itemRel = relPath ? relPath + '/' + item : item;
