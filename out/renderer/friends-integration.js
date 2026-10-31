@@ -1,268 +1,308 @@
-// SKLauncher Ultra - Integrated Friends Network Hub
-// Seamless sidebar navigation and full-page Friends interface
+// SKLauncher Ultra - Friends Network Hub Overlay
+// Safe DOM integration completely isolated from Svelte 5
 
-(function initFriendsIntegration() {
-  let isFriendsActive = false;
-  let activeTabEl = null;
-  let friendsViewEl = null;
-  let refreshTimer = null;
-  let myIdentity = null;
+(function initFriendsNetwork() {
+  if (typeof window === 'undefined') return;
+
+  let overlayEl = null;
+  let isOpen = false;
   let currentFriends = [];
+  let myIdentity = null;
+  let refreshTimer = null;
 
-  // Wait for DOM to be ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setup);
-  } else {
-    setup();
-  }
-
-  function setup() {
-    // 1. Remove old bottom-right button if it exists
-    const oldBtn = document.getElementById('sk-friends-btn');
-    if (oldBtn) oldBtn.remove();
-
-    // 2. Observe the sidebar to inject the Friends navigation item
-    observeSidebar();
-  }
-
-  function observeSidebar() {
-    const observer = new MutationObserver(() => {
-      // Find the main sidebar navigation container
-      const navContainer = document.querySelector('aside nav') || document.querySelector('nav') || document.querySelector('aside');
-      if (navContainer && !document.getElementById('nav-item-friends')) {
-        injectSidebarItem(navContainer);
-      }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // Also check immediately
-    const navContainer = document.querySelector('aside nav') || document.querySelector('nav') || document.querySelector('aside');
-    if (navContainer) {
-      injectSidebarItem(navContainer);
+  function onReady() {
+    try {
+      createSidebarTrigger();
+      createFriendsModal();
+      setupKeyboard();
+    } catch (err) {
+      console.error('[FriendsNetwork] Init error:', err);
     }
   }
 
-  function injectSidebarItem(navContainer) {
-    if (document.getElementById('nav-item-friends')) return;
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(onReady, 500);
+  } else {
+    window.addEventListener('DOMContentLoaded', onReady);
+  }
 
-    // Find a good sibling to insert near (e.g. before settings or after customization)
-    const btn = document.createElement('button');
-    btn.id = 'nav-item-friends';
-    btn.type = 'button';
-    btn.className = 'group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl transition-colors duration-150 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100';
-    btn.setAttribute('title', 'Friends Network (Cracked & Premium)');
-    btn.setAttribute('aria-label', 'Friends Network');
-    btn.style.margin = '4px auto';
+  // 1. Sleek Floating Trigger Button in Left Sidebar
+  function createSidebarTrigger() {
+    if (document.getElementById('sk-friends-trigger')) return;
 
-    // Users icon SVG (Lucide-style matching launcher)
-    btn.innerHTML = `
-      <svg class="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    const trigger = document.createElement('button');
+    trigger.id = 'sk-friends-trigger';
+    trigger.type = 'button';
+    trigger.title = 'Friends Network (Press F or Click)';
+    trigger.setAttribute('aria-label', 'Open Friends Network');
+
+    // Styled to sit comfortably in the sidebar above the settings cog (left: 14px, bottom: 68px)
+    trigger.style.cssText = `
+      position: fixed;
+      left: 14px;
+      bottom: 68px;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      color: #f4f4f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      padding: 0;
+    `;
+
+    trigger.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
         <circle cx="9" cy="7" r="4"></circle>
         <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
       </svg>
-      <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-      </span>
+      <span style="position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #10b981; border: 2px solid #18181b; box-shadow: 0 0 8px #10b981;"></span>
     `;
 
-    // Hook click
-    btn.addEventListener('click', (e) => {
+    trigger.addEventListener('mouseenter', () => {
+      trigger.style.background = '#3f3f46';
+      trigger.style.borderColor = '#10b981';
+      trigger.style.transform = 'scale(1.06)';
+    });
+
+    trigger.addEventListener('mouseleave', () => {
+      trigger.style.background = '#27272a';
+      trigger.style.borderColor = '#3f3f46';
+      trigger.style.transform = 'scale(1)';
+    });
+
+    trigger.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      openFriendsView(btn);
+      toggleFriendsModal();
     });
 
-    // When other sidebar buttons are clicked, close Friends view
-    document.addEventListener('click', (e) => {
-      const targetBtn = e.target.closest('aside button, nav button');
-      if (targetBtn && targetBtn !== btn && isFriendsActive) {
-        closeFriendsView();
-      }
-    });
-
-    // Append into navigation container
-    navContainer.appendChild(btn);
+    document.body.appendChild(trigger);
   }
 
-  function openFriendsView(navBtn) {
-    isFriendsActive = true;
-    activeTabEl = navBtn;
+  // 2. Full-Page Isolated Modal Overlay
+  function createFriendsModal() {
+    if (document.getElementById('sk-friends-modal-overlay')) return;
 
-    // Highlight Friends nav button
-    navBtn.className = 'group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl transition-colors duration-150 bg-emerald-600/20 text-emerald-400 font-bold border border-emerald-500/30';
+    overlayEl = document.createElement('div');
+    overlayEl.id = 'sk-friends-modal-overlay';
+    overlayEl.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 10, 12, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      animation: skFadeIn 0.2s ease-out;
+    `;
 
-    // Locate the main page view container
-    const mainView = document.querySelector('.page-scroll') || document.querySelector('main') || document.querySelector('#app > div > div:last-child');
-    if (!mainView) return;
-
-    // Hide original children
-    for (let i = 0; i < mainView.children.length; i++) {
-      if (mainView.children[i].id !== 'sk-friends-view') {
-        mainView.children[i].style.display = 'none';
-      }
-    }
-
-    // Create or show friends view container
-    if (!friendsViewEl) {
-      friendsViewEl = document.createElement('div');
-      friendsViewEl.id = 'sk-friends-view';
-      friendsViewEl.className = 'w-full max-w-5xl mx-auto p-4 sm:p-6 text-zinc-100 flex flex-col gap-6 animate-fadeIn';
-      mainView.appendChild(friendsViewEl);
-    } else {
-      friendsViewEl.style.display = 'flex';
-    }
-
-    renderFriendsContent();
-
-    // Start auto-refresh interval
-    if (refreshTimer) clearInterval(refreshTimer);
-    refreshTimer = setInterval(fetchAndUpdate, 3000);
-  }
-
-  function closeFriendsView() {
-    isFriendsActive = false;
-    if (activeTabEl) {
-      activeTabEl.className = 'group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl transition-colors duration-150 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100';
-    }
-
-    if (friendsViewEl) {
-      friendsViewEl.style.display = 'none';
-    }
-
-    const mainView = document.querySelector('.page-scroll') || document.querySelector('main') || document.querySelector('#app > div > div:last-child');
-    if (mainView) {
-      for (let i = 0; i < mainView.children.length; i++) {
-        if (mainView.children[i].id !== 'sk-friends-view') {
-          mainView.children[i].style.display = '';
-        }
-      }
-    }
-
-    if (refreshTimer) {
-      clearInterval(refreshTimer);
-      refreshTimer = null;
-    }
-  }
-
-  async function fetchAndUpdate() {
-    if (!window.api || !window.api.p2pFriends) return;
-    try {
-      myIdentity = await window.api.p2pFriends.getMyIdentity();
-      currentFriends = await window.api.p2pFriends.listFriends();
-      renderFriendsContent();
-    } catch (e) {
-      console.warn('[FriendsIntegration] Error updating friends data:', e.message);
-    }
-  }
-
-  async function renderFriendsContent() {
-    if (!friendsViewEl) return;
-
-    if (!myIdentity && window.api && window.api.p2pFriends) {
-      try {
-        myIdentity = await window.api.p2pFriends.getMyIdentity();
-        currentFriends = await window.api.p2pFriends.listFriends();
-      } catch (e) {}
-    }
-
-    const friendCode = myIdentity ? myIdentity.friendCode : 'SK-LOAD-ING1';
-    const username = myIdentity ? myIdentity.username : 'Player';
-    const avatar = `https://mc-heads.net/avatar/${encodeURIComponent(username)}/64`;
-
-    friendsViewEl.innerHTML = `
-      <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
-        <div>
-          <div class="flex items-center gap-3">
-            <h1 class="font-minecraft text-2xl sm:text-3xl font-bold text-white tracking-wide">Friends Network</h1>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              P2P Active
-            </span>
-          </div>
-          <p class="text-xs sm:text-sm text-zinc-400 mt-1">Connect with friends on Cracked & Microsoft accounts with real-time server presence.</p>
-        </div>
-      </div>
-
-      <!-- Top Row: My Profile & Add Friend -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- My Profile Card -->
-        <div class="lg:col-span-6 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 flex items-center gap-4 shadow-lg backdrop-blur-sm">
-          <img src="${avatar}" alt="${username}" class="w-16 h-16 rounded-xl border border-zinc-700 shadow-md bg-zinc-800 object-cover flex-shrink-0" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/64'"/>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-base text-white truncate">${username}</span>
-              <span class="px-2 py-0.5 text-[10px] uppercase font-semibold rounded bg-zinc-800 text-zinc-300 border border-zinc-700">You</span>
+    overlayEl.innerHTML = `
+      <div id="sk-friends-dialog" style="
+        width: 92%;
+        max-width: 760px;
+        max-height: 88vh;
+        background: #18181b;
+        border: 1px solid #27272a;
+        border-radius: 20px;
+        box-shadow: 0 25px 60px -15px rgba(0,0,0,0.9);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        color: #f4f4f5;
+      ">
+        <!-- Header -->
+        <div style="
+          padding: 20px 24px;
+          border-bottom: 1px solid #27272a;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: #202024;
+        ">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="
+              width: 38px;
+              height: 38px;
+              border-radius: 10px;
+              background: rgba(16, 185, 129, 0.15);
+              border: 1px solid rgba(16, 185, 129, 0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #10b981;
+            ">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
             </div>
-            <div class="flex items-center gap-2 mt-1.5">
-              <span class="text-xs font-mono bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-emerald-400 font-semibold select-all">${friendCode}</span>
-              <button id="sk-copy-my-code-btn" type="button" class="cursor-pointer text-xs font-medium px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition">Copy</button>
-            </div>
-            <div class="text-[11px] text-zinc-400 mt-1.5 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span>Online in Launcher</span>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 style="font-size: 18px; font-weight: 700; margin: 0; color: #fff;">Friends Network Hub</h2>
+                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; background: #27272a; color: #a1a1aa; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.5px;">P2P Ultra</span>
+              </div>
+              <p style="font-size: 12px; color: #71717a; margin: 3px 0 0 0;">Connect with cracked and premium friends, view live servers & join seamlessly</p>
             </div>
           </div>
+          <button type="button" id="sk-friends-close-btn" style="
+            background: transparent;
+            border: none;
+            color: #71717a;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+          ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
-        <!-- Add Friend Card -->
-        <div class="lg:col-span-6 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between shadow-lg backdrop-blur-sm">
-          <div>
-            <h3 class="text-sm font-semibold text-white">Add a Friend</h3>
-            <p class="text-xs text-zinc-400 mt-0.5">Enter your friend's unique Friend Code to add them.</p>
-          </div>
-          <form id="sk-add-friend-form" class="flex gap-2 mt-3">
-            <input id="sk-friend-code-input" type="text" placeholder="e.g. SK-A1B2-C3D4" maxlength="12" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 font-mono uppercase transition"/>
-            <button type="submit" class="cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl transition flex items-center gap-1.5 flex-shrink-0">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
-              <span>Add</span>
+        <!-- Scrollable Content -->
+        <div style="padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;">
+          <!-- Profile Card -->
+          <div id="sk-my-profile-card" style="
+            background: #202024;
+            border: 1px solid #27272a;
+            border-radius: 14px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+          ">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <img id="sk-my-avatar" src="https://mc-heads.net/avatar/MHF_Steve/56" alt="Avatar" style="
+                width: 56px;
+                height: 56px;
+                border-radius: 12px;
+                border: 2px solid #3f3f46;
+                background: #18181b;
+                object-fit: cover;
+              "/>
+              <div>
+                <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #10b981; letter-spacing: 0.5px;">Your Profile</div>
+                <div id="sk-my-username" style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px;">Loading...</div>
+                <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                  <span style="font-size: 12px; color: #a1a1aa;">Friend Code:</span>
+                  <span id="sk-my-code" style="font-family: monospace; font-size: 13px; font-weight: 700; color: #38bdf8; background: #18181b; padding: 2px 6px; border-radius: 6px; border: 1px solid #27272a;">SK-....-....</span>
+                </div>
+              </div>
+            </div>
+            <button type="button" id="sk-copy-my-code-btn" style="
+              background: #27272a;
+              border: 1px solid #3f3f46;
+              color: #f4f4f5;
+              padding: 9px 16px;
+              border-radius: 10px;
+              font-size: 13px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy Code</span>
             </button>
-          </form>
-          <div id="sk-add-status-msg" class="text-xs mt-1.5 min-h-[18px]"></div>
-        </div>
-      </div>
+          </div>
 
-      <!-- Friends List Section -->
-      <div class="mt-2">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <span>Friends</span>
-            <span class="px-2 py-0.5 rounded-full text-xs bg-zinc-800 text-zinc-300 border border-zinc-700">${currentFriends.length}</span>
-          </h2>
-          <span class="text-xs text-zinc-500">Auto-refreshes in real time</span>
-        </div>
+          <!-- Add Friend Form -->
+          <div style="background: #202024; border: 1px solid #27272a; border-radius: 14px; padding: 18px 20px;">
+            <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">Add a Friend</div>
+            <p style="font-size: 12px; color: #71717a; margin: 0 0 12px 0;">Enter your friend's code to automatically synchronize online status and game server.</p>
+            <form id="sk-add-friend-form" style="display: flex; gap: 10px; align-items: center;">
+              <input type="text" id="sk-friend-code-input" placeholder="e.g. SK-49A1-BC82" maxlength="16" style="
+                flex: 1;
+                background: #18181b;
+                border: 1px solid #3f3f46;
+                color: #fff;
+                padding: 10px 14px;
+                border-radius: 10px;
+                font-family: monospace;
+                font-size: 14px;
+                outline: none;
+                transition: border-color 0.2s;
+              "/>
+              <button type="submit" id="sk-add-submit-btn" style="
+                background: #10b981;
+                border: none;
+                color: #fff;
+                padding: 10px 20px;
+                border-radius: 10px;
+                font-size: 13px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: background 0.2s;
+                white-space: nowrap;
+              ">Add Friend</button>
+            </form>
+            <div id="sk-add-status-msg" style="font-size: 12px; margin-top: 8px; min-height: 16px;"></div>
+          </div>
 
-        ${currentFriends.length === 0 ? `
-          <div class="bg-zinc-900/40 border border-dashed border-zinc-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center">
-            <div class="w-12 h-12 rounded-2xl bg-zinc-800/80 flex items-center justify-center text-zinc-400 mb-3 border border-zinc-700/50">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <!-- Friends List -->
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div style="font-size: 14px; font-weight: 700; color: #fff;">Friends List</div>
+              <div id="sk-friends-count" style="font-size: 12px; color: #71717a;">0 Friends</div>
             </div>
-            <p class="text-sm font-semibold text-zinc-300">No friends added yet</p>
-            <p class="text-xs text-zinc-500 mt-1 max-w-sm">Share your friend code with your friends or ask them for theirs to see when they are online or playing on a server.</p>
+            <div id="sk-friends-list-container" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Dynamic friends cards inserted here -->
+            </div>
           </div>
-        ` : `
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            ${currentFriends.map(f => renderFriendCard(f)).join('')}
-          </div>
-        `}
+        </div>
       </div>
     `;
 
-    // Hook events
+    document.body.appendChild(overlayEl);
+
+    // Event listeners
+    const closeBtn = document.getElementById('sk-friends-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('mouseenter', () => { closeBtn.style.color = '#fff'; closeBtn.style.background = '#27272a'; });
+      closeBtn.addEventListener('mouseleave', () => { closeBtn.style.color = '#71717a'; closeBtn.style.background = 'transparent'; });
+      closeBtn.addEventListener('click', closeFriendsModal);
+    }
+
+    overlayEl.addEventListener('click', (e) => {
+      if (e.target === overlayEl) closeFriendsModal();
+    });
+
     const copyBtn = document.getElementById('sk-copy-my-code-btn');
     if (copyBtn) {
       copyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(friendCode);
-        copyBtn.textContent = 'Copied!';
-        copyBtn.className = 'cursor-pointer text-xs font-medium px-2.5 py-1 rounded bg-emerald-600 text-white border border-emerald-500 transition';
+        if (!myIdentity || !myIdentity.friendCode) return;
+        navigator.clipboard.writeText(myIdentity.friendCode);
+        copyBtn.innerHTML = `<span>Copied!</span>`;
+        copyBtn.style.borderColor = '#10b981';
+        copyBtn.style.color = '#10b981';
         setTimeout(() => {
-          copyBtn.textContent = 'Copy';
-          copyBtn.className = 'cursor-pointer text-xs font-medium px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition';
-        }, 1500);
+          copyBtn.innerHTML = `
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Copy Code</span>
+          `;
+          copyBtn.style.borderColor = '#3f3f46';
+          copyBtn.style.color = '#f4f4f5';
+        }, 1800);
       });
     }
 
@@ -272,103 +312,254 @@
         e.preventDefault();
         const input = document.getElementById('sk-friend-code-input');
         const statusMsg = document.getElementById('sk-add-status-msg');
-        const val = input.value.trim().toUpperCase();
+        const code = input.value.trim().toUpperCase();
 
-        if (!val || val.length < 6) {
-          statusMsg.textContent = 'Please enter a valid Friend Code (e.g. SK-XXXX-XXXX).';
-          statusMsg.className = 'text-xs mt-1.5 text-rose-400 font-medium';
+        if (!code || code.length < 5) {
+          statusMsg.textContent = 'Please enter a valid friend code (e.g. SK-XXXX-XXXX).';
+          statusMsg.style.color = '#f43f5e';
           return;
         }
 
         try {
-          const res = await window.api.p2pFriends.addFriend(val);
-          if (res && res.success) {
-            statusMsg.textContent = 'Friend added successfully!';
-            statusMsg.className = 'text-xs mt-1.5 text-emerald-400 font-medium';
-            input.value = '';
-            fetchAndUpdate();
-          } else {
-            statusMsg.textContent = res.error || 'Could not add friend.';
-            statusMsg.className = 'text-xs mt-1.5 text-rose-400 font-medium';
+          if (window.api && window.api.p2pFriends) {
+            const res = await window.api.p2pFriends.addFriend(code);
+            if (res && res.success) {
+              statusMsg.textContent = 'Friend added successfully!';
+              statusMsg.style.color = '#10b981';
+              input.value = '';
+              fetchAndUpdate();
+            } else {
+              statusMsg.textContent = res.error || 'Could not add friend.';
+              statusMsg.style.color = '#f43f5e';
+            }
           }
         } catch (err) {
           statusMsg.textContent = 'Error: ' + err.message;
-          statusMsg.className = 'text-xs mt-1.5 text-rose-400 font-medium';
+          statusMsg.style.color = '#f43f5e';
         }
       });
     }
+  }
 
-    // Hook remove buttons
-    document.querySelectorAll('.sk-remove-friend-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const code = btn.getAttribute('data-code');
-        if (confirm(`Remove this friend (${code}) from your list?`)) {
-          await window.api.p2pFriends.removeFriend(code);
-          fetchAndUpdate();
+  function setupKeyboard() {
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        closeFriendsModal();
+      }
+    });
+  }
+
+  function toggleFriendsModal() {
+    if (isOpen) {
+      closeFriendsModal();
+    } else {
+      openFriendsModal();
+    }
+  }
+
+  function openFriendsModal() {
+    if (!overlayEl) return;
+    isOpen = true;
+    overlayEl.style.display = 'flex';
+    fetchAndUpdate();
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(fetchAndUpdate, 4000);
+  }
+
+  function closeFriendsModal() {
+    if (!overlayEl) return;
+    isOpen = false;
+    overlayEl.style.display = 'none';
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  }
+
+  async function fetchAndUpdate() {
+    if (!window.api || !window.api.p2pFriends) return;
+
+    try {
+      // 1. Identity
+      if (!myIdentity) {
+        myIdentity = await window.api.p2pFriends.getMyIdentity();
+        if (myIdentity) {
+          const userEl = document.getElementById('sk-my-username');
+          const codeEl = document.getElementById('sk-my-code');
+          const avatarEl = document.getElementById('sk-my-avatar');
+          if (userEl) userEl.textContent = myIdentity.username || 'Minecraft Player';
+          if (codeEl) codeEl.textContent = myIdentity.friendCode || 'SK-XXXX-XXXX';
+          if (avatarEl) {
+            avatarEl.src = `https://mc-heads.net/avatar/${encodeURIComponent(myIdentity.username || 'MHF_Steve')}/56`;
+          }
+        }
+      }
+
+      // 2. Friends list
+      const friends = await window.api.p2pFriends.listFriends();
+      currentFriends = friends || [];
+      renderFriendsList();
+    } catch (err) {
+      console.warn('[FriendsNetwork] Fetch failed:', err);
+    }
+  }
+
+  function renderFriendsList() {
+    const container = document.getElementById('sk-friends-list-container');
+    const countEl = document.getElementById('sk-friends-count');
+    if (!container) return;
+
+    if (countEl) countEl.textContent = `${currentFriends.length} Friend${currentFriends.length === 1 ? '' : 's'}`;
+
+    if (currentFriends.length === 0) {
+      container.innerHTML = `
+        <div style="
+          padding: 36px 20px;
+          text-align: center;
+          background: #202024;
+          border: 1px dashed #3f3f46;
+          border-radius: 14px;
+        ">
+          <div style="color: #a1a1aa; font-size: 14px; font-weight: 600;">No friends added yet</div>
+          <p style="color: #71717a; font-size: 12px; margin: 4px auto 0; max-width: 320px;">
+            Share your Friend Code with other players or enter their code above to see when they are playing!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = currentFriends.map(f => {
+      const isPlayingServer = f.status === 'in-game' && f.server;
+      const isPlayingSolo = f.status === 'playing-solo' || (f.status === 'in-game' && !f.server);
+      const isOnline = f.status === 'online';
+
+      let statusBadge = `
+        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #10b981; font-weight: 600;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
+          Online in Launcher
+        </span>
+      `;
+
+      if (isPlayingServer) {
+        statusBadge = `
+          <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #a855f7; font-weight: 700;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #a855f7; box-shadow: 0 0 6px #a855f7;"></span>
+            Playing on ${escapeHtml(f.server)}
+          </span>
+        `;
+      } else if (isPlayingSolo) {
+        statusBadge = `
+          <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #38bdf8; font-weight: 600;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #38bdf8;"></span>
+            Playing Singleplayer
+          </span>
+        `;
+      } else if (!isOnline) {
+        statusBadge = `
+          <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #71717a;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #52525b;"></span>
+            Offline
+          </span>
+        `;
+      }
+
+      return `
+        <div style="
+          background: #202024;
+          border: 1px solid #27272a;
+          border-radius: 12px;
+          padding: 12px 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        ">
+          <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+            <img src="${f.avatarUrl || `https://mc-heads.net/avatar/${encodeURIComponent(f.username)}/44`}" alt="${escapeHtml(f.username)}" style="
+              width: 44px;
+              height: 44px;
+              border-radius: 10px;
+              border: 1px solid #3f3f46;
+              background: #18181b;
+              object-fit: cover;
+              flex-shrink: 0;
+            " onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/44'"/>
+            <div style="min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px; font-weight: 700; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHtml(f.username)}</span>
+                <span style="font-family: monospace; font-size: 11px; color: #71717a;">${escapeHtml(f.friendCode)}</span>
+              </div>
+              <div style="margin-top: 3px;">
+                ${statusBadge}
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+            ${isPlayingServer ? `
+              <button type="button" class="sk-join-btn" data-server="${escapeHtml(f.server)}" style="
+                background: #10b981;
+                border: none;
+                color: #fff;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: background 0.15s;
+              ">Join Server</button>
+            ` : ''}
+            <button type="button" class="sk-remove-btn" data-code="${escapeHtml(f.friendCode)}" title="Remove Friend" style="
+              background: transparent;
+              border: none;
+              color: #71717a;
+              cursor: pointer;
+              padding: 6px;
+              border-radius: 6px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: color 0.15s;
+            ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach join server handlers
+    container.querySelectorAll('.sk-join-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const server = btn.getAttribute('data-server');
+        if (server) {
+          navigator.clipboard.writeText(server);
+          btn.textContent = 'IP Copied!';
+          btn.style.background = '#059669';
+          setTimeout(() => {
+            btn.textContent = 'Join Server';
+            btn.style.background = '#10b981';
+          }, 2000);
         }
       });
     });
 
-    // Hook join server buttons
-    document.querySelectorAll('.sk-join-server-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const server = btn.getAttribute('data-server');
-        navigator.clipboard.writeText(server);
-        btn.textContent = 'Server IP Copied!';
-        setTimeout(() => { btn.textContent = 'Join Server'; }, 2000);
+    // Attach remove handlers
+    container.querySelectorAll('.sk-remove-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const code = btn.getAttribute('data-code');
+        if (code && confirm(`Remove friend ${code}?`)) {
+          if (window.api && window.api.p2pFriends) {
+            await window.api.p2pFriends.removeFriend(code);
+            fetchAndUpdate();
+          }
+        }
       });
     });
   }
 
-  function renderFriendCard(f) {
-    const isPlayingServer = f.status === 'in-game' && f.server;
-    const isPlayingSolo = f.status === 'playing-solo' || (f.status === 'in-game' && !f.server);
-    const isOnline = f.status === 'online';
-
-    let statusText = 'Online in Launcher';
-    let statusClass = 'text-emerald-400';
-    let dotClass = 'bg-emerald-400';
-
-    if (isPlayingServer) {
-      statusText = `Playing on ${f.server}`;
-      statusClass = 'text-purple-400 font-semibold';
-      dotClass = 'bg-purple-400 animate-pulse';
-    } else if (isPlayingSolo) {
-      statusText = f.instanceName ? `Solo: ${f.instanceName}` : 'In Singleplayer Game';
-      statusClass = 'text-sky-400 font-semibold';
-      dotClass = 'bg-sky-400';
-    } else if (!isOnline) {
-      statusText = 'Offline';
-      statusClass = 'text-zinc-500';
-      dotClass = 'bg-zinc-600';
-    }
-
-    return `
-      <div class="bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700/80 rounded-2xl p-4 flex items-center justify-between gap-4 transition shadow-md">
-        <div class="flex items-center gap-3.5 min-w-0">
-          <img src="${f.avatarUrl || `https://mc-heads.net/avatar/${encodeURIComponent(f.username)}/48`}" alt="${f.username}" class="w-12 h-12 rounded-xl border border-zinc-700 bg-zinc-800 object-cover flex-shrink-0" onerror="this.src='https://mc-heads.net/avatar/MHF_Steve/48'"/>
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-sm text-white truncate">${f.username}</span>
-              <span class="text-[10px] font-mono text-zinc-500">${f.friendCode}</span>
-            </div>
-            <div class="flex items-center gap-1.5 mt-1">
-              <span class="w-2 h-2 rounded-full ${dotClass}"></span>
-              <span class="text-xs truncate ${statusClass}">${statusText}</span>
-            </div>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 flex-shrink-0">
-          ${isPlayingServer ? `
-            <button type="button" data-server="${f.server}" class="sk-join-server-btn cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition shadow-sm">
-              Join Server
-            </button>
-          ` : ''}
-          <button type="button" data-code="${f.friendCode}" title="Remove Friend" class="sk-remove-friend-btn cursor-pointer p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-          </button>
-        </div>
-      </div>
-    `;
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
   }
 })();
