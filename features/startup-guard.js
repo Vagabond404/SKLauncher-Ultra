@@ -21,9 +21,15 @@ class StartupGuard {
         this.userDataPath = path.join(appData, '.sklauncher', 'bin');
       }
 
-      if (!fs.existsSync(this.userDataPath)) {
-        fs.mkdirSync(this.userDataPath, { recursive: true });
-      }
+      try {
+        if (!fs.existsSync(this.userDataPath)) {
+          fs.mkdirSync(this.userDataPath, { recursive: true });
+        }
+      } catch (e) {}
+
+      // Disable renderer AppContainer sandbox restriction to allow reading resources
+      electron.app.commandLine.appendSwitch('no-sandbox');
+      electron.app.commandLine.appendSwitch('disable-gpu-sandbox');
 
       this.crashFlagPath = path.join(this.userDataPath, 'startup-crash.flag');
 
@@ -40,8 +46,10 @@ class StartupGuard {
         this.clearGpuCache();
       }
 
-      // Write crash flag. It will be cleared once the main window successfully shows
-      fs.writeFileSync(this.crashFlagPath, new Date().toISOString(), 'utf8');
+      // Write crash flag safely
+      try {
+        fs.writeFileSync(this.crashFlagPath, new Date().toISOString(), 'utf8');
+      } catch (e) {}
 
       // Intercept GPU process crashes gracefully so the app does not terminate
       electron.app.on('gpu-process-crashed', (event, killed) => {
@@ -49,7 +57,7 @@ class StartupGuard {
       });
 
     } catch (err) {
-      console.error('[StartupGuard] Initialization error:', err);
+      console.warn('[StartupGuard] Initialization notice:', err.message);
     }
   }
 

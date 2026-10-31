@@ -53,3 +53,14 @@ begin
   ShellExec('open', 'taskkill.exe', '/F /IM sklauncher.exe /T', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
   Result := True;
 end;
+
+// Grant Windows AppContainer sandbox permissions so Electron renderer processes can access files
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ErrorCode: Integer;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    ShellExec('open', 'icacls.exe', '"' + ExpandConstant('{app}') + '" /grant *S-1-15-2-1:(OI)(CI)(RX) /T', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+  end;
+end;
